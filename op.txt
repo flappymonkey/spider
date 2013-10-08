@@ -1,0 +1,21 @@
+ToC第二期Spider模块上线步骤
+1.登陆ops@ztmhs.maimiaotech.com, cd ~/
+2.git clone git@github.com:Maimiaotech/ToC.git ToC_2014
+3.cd ToC_2014;git checkout -b 2014 origin/2014;mkdir -p Spider/log
+4.修改crontab如下
+HOME=/home/ops/ToC_2014/Spider/taobao_jhs
+1,11,21,31,41,51/10 * * * * scrapy crawl taobao_jhs >> ../log/taobao_jhs.out 2>&1
+HOME=/home/ops/ToC_2014/Spider/taobao_tejia
+1,11,21,31,41,51/10 * * * * scrapy crawl taobao_tejia >> ../log/taobao_tejia.out 2>&1
+HOME=/home/ops/ToC_2014/Spider/qq_yxthh
+1,11,21,31,41,51/10 * * * * scrapy crawl qq_yxthh >> ../log/qq_yxthh.out 2>&1
+HOME=/home/ops/ToC_2014/Spider/sn_zq8dd
+1,11,21,31,41,51/10 * * * * scrapy crawl sn_zq8dd >> ../log/sn_zq8dd.out 2>&1
+HOME=/home/ops/ToC_2014/Spider/zhe800_baoyou
+1,31/30 * * * * scrapy crawl zhe800_baoyou >> ../log/zhe800_baoyou.out 2>&1
+HOME=/home/ops/ToC_2014/Spider/vancl_miaosha
+1,11,21,31,41,51/10 * * * * scrapy crawl vancl_miaosha >> ../log/vancl_miaosha.out 2>&1
+HOME=/home/ops/ToC_2014/Spider/ZSecKill
+1,11,21,31,41,51/10 * * * * scrapy crawl ZSecKillSpider >> ../log/ZSecKill.out 2>&1
+5.mongodb 对seckills的seckill按价格和开始时间和结束时间建顺序和逆序索引
+6.部署监控，如果出现ERROR就发报警
