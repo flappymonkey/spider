@@ -14,6 +14,7 @@ sys.path.append('../comm_lib')
 from utils import get_one, get_one_string, get_attr, get_obj_attr, get_num, to_fen, get_pic_url, get_item_id, get_discount, UNKNOWN_NUM, UNLIMITED_NUM
 import time
 import utils
+import socket
 
 debug = False
 print_url = False
@@ -37,6 +38,10 @@ class TaobaoJhsSpider(BaseSpider):
     ]
     display_name = u'聚划算'
 
+    def __init__(self):
+        self.cg = utils.CategoryGet(['../tools/1', '../tools/2'])
+        socket.setdefaulttimeout(60)
+
     def parse(self, response):
         hxs = HtmlXPathSelector(response)
         h_li_array = hxs.select('//body/div[@class="wrapper"]/div[@id="page"]/div[@id="content"]/div[@class="point-nav-box"]/div[@class="point-nav_new J_PointNav"]/div[@id="J_timeline"]/div[@class="timeline_scroll"]/ul[@class="clearfix"]/li')
@@ -48,6 +53,8 @@ class TaobaoJhsSpider(BaseSpider):
                 ['data-point', '@data-point', 'int', None],
             ]
             attr_dict = get_attr(xpath_list, h_li)
+            if not attr_dict:
+                continue
             ret_items.append(Request(url = attr_dict['url'], callback=self.parse_one_day, meta={'data-point':attr_dict['data-point']}))
         return ret_items
 
@@ -89,9 +96,14 @@ class TaobaoJhsSpider(BaseSpider):
                     ['li_classname', '@class', 'string', None],
                 ]
                 attr_dict = get_attr(xpath_list, h_li)
+                if not attr_dict:
+                    continue
                 log.msg("start = " + str(start_time), level=log.DEBUG)
-                if attr_dict['will'] != u'人已买':
+                if not attr_dict.has_key('will'):
                     attr_dict['sale'] = UNKNOWN_NUM
+                elif attr_dict['will'] != u'人已买':
+                    attr_dict['sale'] = UNKNOWN_NUM
+
                 sale_percent = -1
                 if attr_dict['limit'] != UNLIMITED_NUM and attr_dict['sale'] != UNKNOWN_NUM:
                     sale_percent = int(attr_dict['sale'] * 100 / attr_dict['limit'])
@@ -101,8 +113,15 @@ class TaobaoJhsSpider(BaseSpider):
                     img_url = attr_dict['img_url1']
                 else:
                     img_url = attr_dict['img_url2']
-                img_url = get_pic_url(get_item_id(attr_dict['url']))
+                img_url, detail_url, baoyou, cid = utils.get_taobao_item_info(get_item_id(attr_dict['url']))
+                origin_category_name, category_name = self.cg.get_cid_name(cid)
+                log.msg('origin_category_name ' + origin_category_name + ' category_name ' + category_name + ' title ' + attr_dict['title'] + ' url ' + attr_dict['url'], level = log.DEBUG)
                 log.msg("img_url = " + str(img_url), level=log.DEBUG)
+
+                if not baoyou:
+                    log.msg('skip goods because not baoyou', level = log.DEBUG)
+                    continue
+
                 if attr_dict.has_key('current_price_fen'):
                     current_price = to_fen(attr_dict['current_price_yuan'] + attr_dict['current_price_fen'])
                 else:
@@ -125,13 +144,6 @@ class TaobaoJhsSpider(BaseSpider):
                 prod['sale'] = attr_dict['sale']
                 prod['sale_percent'] = sale_percent
                 prod['display_time_begin'] = start_time
-                '''
-                if end_time:
-                    prod['display_time_end'] = end_time
-                    prod['stat'] = utils.BEGIN
-                else:
-                    prod['display_time_end'] = utils.get_default_end_time()
-                '''
                 prod['display_time_end'] = utils.get_default_end_time()
                 if not attr_dict.has_key('li_classname'):
                     prod['stat'] = utils.BEGIN
@@ -143,11 +155,10 @@ class TaobaoJhsSpider(BaseSpider):
                 else:
                     self.log('unknown state', level = log.ERROR)
 
-                #attr_dict['li_classname']
-                #prod['actual_time_begin'] = start_time
-                #prod['actual_time_end'] = start_time
                 prod['limit'] = attr_dict['limit']
                 prod['source'] = self.display_name
+                prod['origin_category_name'] = origin_category_name
+                prod['category_name'] = category_name
                 ret_items.append(prod)
                 if debug == True:
                     break

@@ -21,3 +21,5 @@ class SnZq8DdItem(Item):
     actual_time_end = Field() #实际失效时间
     stat = Field() #已失效，进行中，即将开始
     left_goods = Field() #剩余的商品
+    origin_category_name = Field() #原始类目名
+    category_name = Field() #类目名

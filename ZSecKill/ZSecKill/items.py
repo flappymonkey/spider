@@ -19,3 +19,5 @@ class ZseckillItem(Item):
     actual_time_begin = Field() #实际开始时间
     actual_time_end = Field() #实际失效时间
     stat = Field() #已失效，进行中，即将开始
+    origin_category_name = Field() #原始类目名
+    category_name = Field() #类目名

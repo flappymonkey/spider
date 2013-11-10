@@ -85,6 +85,7 @@ class Zhe800BaoyouSpider(BaseSpider):
         self.driver.set_page_load_timeout(20)
         self.driver.set_script_timeout(20)
         socket.setdefaulttimeout(20)
+        self.cg = utils.CategoryGet(['../tools/1', '../tools/2'])
 
     def get_next_page(self, response):
         hxs = HtmlXPathSelector(response)
@@ -125,6 +126,8 @@ class Zhe800BaoyouSpider(BaseSpider):
                 ['start_time_str', 'div/h5/span/text()', 'string', None],
             ]
             attr_dict = get_attr(xpath_list, h_div)
+            if not attr_dict:
+                continue
             start_time = get_datetime(attr_dict['start_time_str'])
             if start_time < utils.get_default_start_time():
                 log.msg('skip too old time ', level = log.DEBUG)
@@ -143,7 +146,7 @@ class Zhe800BaoyouSpider(BaseSpider):
             a_obj = utils.find_element_by_xpath(self.driver, '//body/div[@id="dialog_out_weldeal"]/div[@class="diginfo"]/div[@class="weloutdialog"]/div[@id="ppLogin"]/form[@name="loginform"]/ul/li[@class="reg"]/a')
             log.msg('after find_element_by_xpath ', level = log.DEBUG)
             if not a_obj:
-                log.msg('Faild to get url from login_url ' + attr_dict['login_url'], level = log.ERROR)
+                log.msg('failed to get url from login_url ' + attr_dict['login_url'], level = log.WARNING)
                 continue
             a_obj.click()
             log.msg('after click ', level = log.DEBUG)
@@ -160,6 +163,14 @@ class Zhe800BaoyouSpider(BaseSpider):
             #url = 'http://www.example.com'
             log.msg('after current_url ' + url, level = log.DEBUG)
 
+            pic_url, item_url, baoyou, cid = utils.get_taobao_item_info(utils.get_id(url))
+            if not item_url:
+                log.msg('failed to get item info url ' + url, level = log.DEBUG)
+                continue
+
+            origin_category_name, category_name = self.cg.get_cid_name(cid)
+            log.msg('origin_category_name ' + origin_category_name + ' category_name ' + category_name + ' title ' + attr_dict['title'] + ' url ' + url, level = log.DEBUG)
+            
             discount = get_discount(current_price, attr_dict['origin_price'])
             self.log("discount " + str(discount), level = log.DEBUG)
 
@@ -189,6 +200,8 @@ class Zhe800BaoyouSpider(BaseSpider):
             #prod['actual_time_end'] = start_time
             prod['limit'] = UNLIMITED_NUM
             prod['source'] = self.display_name
+            prod['origin_category_name'] = origin_category_name
+            prod['category_name'] = category_name
             ret_items.append(prod)
             if debug :
                 break

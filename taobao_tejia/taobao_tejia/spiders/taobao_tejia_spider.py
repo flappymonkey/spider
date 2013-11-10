@@ -16,6 +16,7 @@ from selenium.common.exceptions import NoSuchElementException
 import time
 import hashlib
 from taobao_tejia.items import TaobaoTejiaItem
+import socket
 
 class TaobaoTejiaSpider(BaseSpider):
     name = "taobao_tejia"
@@ -24,6 +25,10 @@ class TaobaoTejiaSpider(BaseSpider):
     "http://tejia.taobao.com/ttt.htm"
     ]
     display_name = u'天天特价'
+
+    def __init__(self):
+        self.cg = utils.CategoryGet(['../tools/1', '../tools/2'])
+        socket.setdefaulttimeout(60)
 
     def parse(self, response):
         hxs = HtmlXPathSelector(response)
@@ -40,6 +45,8 @@ class TaobaoTejiaSpider(BaseSpider):
                 ['sale', 'dd/span/em/text()', 'int', None],
             ]
             attr_dict = get_attr(xpath_list, h_li)
+            if not attr_dict:
+                continue
             prod = TaobaoTejiaItem()
             prod['link'] = attr_dict['url']
             prod['id'] = hashlib.md5(prod['link']).hexdigest().upper()
@@ -51,8 +58,18 @@ class TaobaoTejiaSpider(BaseSpider):
             log.msg('img_url_cut ' + attr_dict['img_url'][0:index], level = log.DEBUG)
             #prod['img'] = utils.get_pic_url(utils.get_id(attr_dict['url']))
             prod['img'] = attr_dict['img_url'][0:index]
+            pic_url, detail_url, baoyou, cid = utils.get_taobao_item_info(utils.get_id(attr_dict['url']))
+            if not pic_url:
+                log.msg('failed to get taobao item info', level = log.DEBUG)
+                continue
+
+            if not baoyou:
+                log.msg('skip goods because not baoyou', level = log.DEBUG)
+                continue
             #second_pic_url = utils.get_second_pic_url(utils.get_id(attr_dict['url']))
             #log.msg('second_pic_url ' + second_pic_url, level = log.DEBUG)
+            origin_category_name, category_name = self.cg.get_cid_name(cid)
+            log.msg('origin_category_name ' + origin_category_name + ' category_name ' + category_name + ' title ' + attr_dict['title'] + ' url ' + attr_dict['url'], level = log.DEBUG)
             prod['ori_price'] = attr_dict['origin_price']
             prod['cur_price'] = attr_dict['current_price']
             prod['discount'] = utils.get_discount(attr_dict['current_price'], attr_dict['origin_price'])
@@ -69,5 +86,7 @@ class TaobaoTejiaSpider(BaseSpider):
                 prod['stat'] = utils.END
                 prod['display_time_end'] = int(time.time())
             prod['source'] = self.display_name
+            prod['origin_category_name'] = origin_category_name
+            prod['category_name'] = category_name
             ret_items.append(prod)
         return ret_items

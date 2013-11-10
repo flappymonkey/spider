@@ -98,6 +98,10 @@ class SmzdmSpider(BaseSpider):
             if not title_list:
                 log.msg('[%s] get title error,path[%s]'% (CUR_NAME,Smzdm.settings.PATH_CONFIG['TITLE_PATH'][CUR_NAME]),level=log.WARNING)
                 continue
+            #img_list = content.select(Smzdm.settings.PATH_CONFIG['IMG_PATH'][CUR_NAME]).extract()
+            #if not img_list:
+            #   log.msg('[%s] get img error,path[%s]'% (CUR_NAME,Smzdm.settings.PATH_CONFIG['IMG_PATH'][CUR_NAME]),level=log.WARNING)
+            #   continue
             #past_time = content.select('div[@class="dateTime"]/text()').extract()
 
             t_diff = 0
@@ -164,7 +168,9 @@ class SmzdmSpider(BaseSpider):
 
         for cur_path in Smzdm.settings.PATH_CONFIG['DESC_PATH'][CUR_NAME]:
             desc_items =  desc_items + main_item.select(cur_path)
-
+        if len(desc_items) == 0:
+            log.msg('[%s][%s] get desc error'%(CUR_NAME,prod['source_url']),level=log.WARNING)
+            return
         for desc_item in desc_items:
             #cur_str = desc_item.extract().encode('utf-8')
             cur_str = desc_item.extract()
@@ -185,23 +191,31 @@ class SmzdmSpider(BaseSpider):
                 link_dict[href_desc[i]] = href[i]
             img_list += desc_item.select(Smzdm.settings.PATH_CONFIG['DESC_IMG_PATH'][CUR_NAME]).extract()
         img_list += main_item.select(Smzdm.settings.PATH_CONFIG['IMG_PATH'][CUR_NAME]).extract()
-
+        if len(img_list) == 0:
+            #print prod['source_url'],desc_list[0]
+            log.msg('[%s][%s] get img error'%(CUR_NAME,prod['source_url']),level=log.WARNING)
+            return
+        prod['img'] = [self._process_url(img_list[0],Smzdm.settings.PATH_CONFIG['NAME_TO_PRE'][CUR_NAME])]
         for cur_path in Smzdm.settings.PATH_CONFIG['GO_LINK_PATH'][CUR_NAME]:
             go_link_list += main_item.select(cur_path).extract()
-        ret_items = []
+        #ret_items = []
         i = 0
 
+        prod['go_link'] = []
         for go_link in go_link_list:
             #print  CUR_NAME,prod['id'],Smzdm.settings.PATH_CONFIG['GO_LINK_PRE'][CUR_NAME] + go_link
             temp_use_url = self._process_url(go_link,Smzdm.settings.PATH_CONFIG['NAME_TO_PRE'][CUR_NAME])
             #print CUR_NAME,go_link,temp_use_url
             #print 'go link',prod['id'],temp_use_url
-            ret_items.append(Request(url=temp_use_url,dont_filter=True,callback=self.parse_link,meta={'id':prod['id'],'desc':str(i),'flag':2}))
+            #ret_items.append(Request(url=temp_use_url,dont_filter=True,callback=self.parse_link,meta={'id':prod['id'],'desc':str(i),'flag':2}))
+            temp_list = []
+            temp_list.append(str(i))
+            temp_list.append(temp_use_url)
+            prod['go_link'].append(temp_list)
             i += 1
         prod['title'] = response.meta['title']
         prod['desc'] = desc_list
         #prod['desc_link'] = link_dict
-        prod['img'] = img_list
         #cur_time = main_item.select('//div[@class="dateTime"]/text()').extract()
         #if cur_time:
         #    prod['pub_time'] = cur_time[0]
@@ -221,12 +235,16 @@ class SmzdmSpider(BaseSpider):
                 prod['source'].append(cur_source)
         elif response.meta['sor_item']:
             prod['source'] = response.meta['sor_item']
-
+        prod['desc_link_list'] = []
         for (desc,link) in link_dict.items():
             temp_use_url = self._process_url(link,Smzdm.settings.PATH_CONFIG['NAME_TO_PRE'][CUR_NAME])
             #print CUR_NAME,link,temp_use_url
             #print 'desc link',prod['id'],desc,temp_use_url
-            ret_items.append(Request(url=temp_use_url,callback=self.parse_link,dont_filter=True,meta={'id':prod['id'],'desc':desc,'flag':1}))
+            temp_list = []
+            temp_list.append(desc)
+            temp_list.append(temp_use_url)
+            prod['desc_link_list'].append(temp_list)
+            #ret_items.append(Request(url=temp_use_url,callback=self.parse_link,dont_filter=True,meta={'id':prod['id'],'desc':desc,'flag':1}))
         #print prod['source_url'],prod['id'],prod['title'],prod['desc'],prod['desc_link'],prod['pub_time'],prod['img'],prod['cat'],prod['source']
         prod['flag'] = 0
         prod['worth_num'] = 0
@@ -243,10 +261,10 @@ class SmzdmSpider(BaseSpider):
         prod['stat'] = 0
         prod['need_filter'] = Smzdm.settings.PATH_CONFIG['NEED_FILTER'][CUR_NAME]
         prod['same_id'] = 'NONE'
-        ret_items.append(prod)
+        #ret_items.append(prod)
         log.msg('[%s] get item %r'%(CUR_NAME,prod),level=log.DEBUG)
-        return ret_items
-    def parse_link(self,response):
+        return prod
+    '''def parse_link(self,response):
         prod = SmzdmItem()
         prod['id'] = response.meta['id']
         prod['link_desc'] = response.meta['desc']
@@ -254,4 +272,4 @@ class SmzdmSpider(BaseSpider):
         prod['flag'] = response.meta['flag']
         log.msg('get url %r'%prod,level=log.DEBUG)
         #print 'aa',response.meta['id'],response.url,unquote(unquote(response.url)),prod['link']
-        return prod
+        return prod'''

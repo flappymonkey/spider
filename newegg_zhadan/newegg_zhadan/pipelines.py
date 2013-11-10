@@ -6,14 +6,9 @@
 import pymongo
 from scrapy import log
 import time
-import sys
-sys.path.append('../comm_lib')
-from utils import set_origin_value
-import utils
 MONGODB_SAFE = False
 MONGODB_ITEM_ID_FIELD = "_id"
-
-class SnZq8DdPipeline(object):
+class NeweggZhadanPipeline(object):
     def __init__(self, mongodb_server, mongodb_port, mongodb_db, mongodb_collection, mongodb_uniq_key,
                  mongodb_item_id_field, mongodb_safe):
         connection = pymongo.Connection(mongodb_server, mongodb_port)
@@ -46,28 +41,4 @@ class SnZq8DdPipeline(object):
 
     def close_spider(self,spider):
         for (id,item) in self.result_dict.items():
-            cursor = self.collection.find_one({self.uniq_key : item[self.uniq_key]})
-            utils.set_origin_value_list(item, cursor, ['display_time_begin'])
-            utils.set_origin_value_if_db_smaller(item, cursor, 'display_time_end')
-            utils.check_status(item, cursor)
-            if item.has_key('limit') and item['limit'] != utils.UNLIMITED_NUM:
-                limit = item['limit']
-            elif item.has_key('left_goods'):
-                limit = item['left_goods']
-            else:
-                limit = utils.UNLIMITED_NUM
-            origin_limit = utils.UNLIMITED_NUM
-            if cursor:
-                if cursor.has_key('limit') and cursor['limit'] != utils.UNLIMITED_NUM:
-                    origin_limit = cursor['limit']
-                    if origin_limit > limit:
-                        limit = origin_limit
-
-            if item.has_key('left_goods'):
-                sale = limit - item['left_goods']
-                item['sale'] = sale
-                item['limit'] = limit
-                item['sale_percent'] = sale * 100 / limit
             self.collection.update({self.uniq_key: item[self.uniq_key] }, {'$set':dict(item) },upsert=True, safe=self.safe)
-        utils.driver_quit(spider.driver)
-        spider.log('driver.quit()', level = log.DEBUG)

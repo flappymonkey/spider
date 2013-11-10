@@ -11,6 +11,14 @@ from ZSecKill.items import ZseckillItem
 import time
 import hashlib
 import datetime
+import urllib
+import urllib2
+import sys
+sys.path.append('../comm_lib')
+import utils
+import traceback
+import socket
+
 class ZSecKillSpider(BaseSpider):
     name = "ZSecKillSpider"
     start_urls = START_URL
@@ -20,6 +28,7 @@ class ZSecKillSpider(BaseSpider):
         self.driver = webdriver.Firefox()
         self.driver.set_page_load_timeout(20)
         self.driver.set_script_timeout(20)
+        socket.setdefaulttimeout(20)
 
     def get_day_start_unix(self):
         cur_str = datetime.datetime.now().strftime('%Y-%m-%d') + ' 00:00:00'
@@ -94,6 +103,17 @@ class ZSecKillSpider(BaseSpider):
             cur_str += (i + '/')
         return cur_str
 
+    def process_category_name(self, item, hxs):
+        origin_category_name = utils.get_one(hxs.select('//body/div[@class="singlecolumnminwidth"]/header/div[@id="navbar"]/div[@id="nav-bar-outer"]/div[@id="nav-bar-inner"]/ul[@id="nav-subnav"]/li[@class="nav-subnav-item nav-category-button"]/a/text()').extract())
+        category_name = utils.get_zseckill_cateogry_name(origin_category_name)
+        if not item.has_key('title'):
+            title = 'unknown'
+        else:
+            title = item['title']
+        log.msg('origin_category_name ' + origin_category_name + ' category_name ' + category_name + ' title ' + title + ' url ' + item['link'], level = log.DEBUG)
+        item['origin_category_name'] = origin_category_name
+        item['category_name'] = category_name
+
     def process_current_item(self,item):
         try:
             prod = ZseckillItem()
@@ -149,7 +169,8 @@ class ZSecKillSpider(BaseSpider):
             prod['stat'] = 2
             return prod
         except Exception as e:
-            log.msg('process current item exception happen:%s'%e,level=log.WARNING)
+            exstr = traceback.format_exc()
+            log.msg('process current item exception happen:' + exstr,level=log.WARNING)
             return None
     def process_upcoming_item(self,item):
         try:
@@ -178,7 +199,8 @@ class ZSecKillSpider(BaseSpider):
             prod['stat'] = 1
             return prod
         except Exception as e:
-            log.msg('process upcoming item exception happen:%s'%e,level=log.WARNING)
+            exstr = traceback.format_exc()
+            log.msg('process upcoming item exception happen:' + exstr,level=log.WARNING)
             return None
     def process_missed_item(self,item):
         try:
@@ -193,7 +215,8 @@ class ZSecKillSpider(BaseSpider):
             prod['stat'] = 3
             return prod
         except Exception as e:
-            log.msg('process missed item exception happen:%s'%e,level=log.WARNING)
+            exstr = traceback.format_exc()
+            log.msg('process missed item exception happen:' + exstr,level=log.WARNING)
             return None
 
     def parse_current_item(self,type):
@@ -273,9 +296,10 @@ class ZSecKillSpider(BaseSpider):
             else:
                 log.msg('missed list is empty',level=log.DEBUG)
         except Exception as e:
-            log.msg('exception happen:%s'%e,level=log.WARNING)
+            exstr = traceback.format_exc()
+            log.msg('exception happen:' + exstr,level=log.WARNING)
         finally:
-            self.driver.quit()
+            utils.driver_quit(self.driver)
         # process upcoming
     def parse_item(self,response):
         hxs = HtmlXPathSelector(response)
@@ -293,6 +317,8 @@ class ZSecKillSpider(BaseSpider):
             log.msg('error get img_item error id:%s stat:%d'%(prod['id'],prod['stat']),level=log.WARNING)
             return
         prod['source'] = 'Z秒杀'
+        self.process_category_name(prod, hxs)
+
         return prod
 
 

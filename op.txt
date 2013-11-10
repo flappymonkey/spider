@@ -19,3 +19,16 @@ HOME=/home/ops/ToC_2014/Spider/ZSecKill
 1,11,21,31,41,51/10 * * * * scrapy crawl ZSecKillSpider >> ../log/ZSecKill.out 2>&1
 5.mongodb 对seckills的seckill按价格和开始时间和结束时间建顺序和逆序索引
 6.部署监控，如果出现ERROR就发报警
+
+ToC增加分类
+确保有unzip命令
+1.登陆ops@ztmhs.maimiaotech.com, cd ~/ToC_2014
+2.crontab暂停spider
+3.git pull origin
+4.修改crontab，增加
+HOME=/home/ops/ToC_2014/Spider/tools/
+0 9 * * 4 bash download_cat_info.sh
+5.手动执行
+cd /home/ops/ToC_2014/Spider/tools/
+bash download_cat_info.sh
+6.crontab重启spider

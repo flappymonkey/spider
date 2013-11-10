@@ -19,6 +19,7 @@ sys.path.append('../comm_lib')
 from utils import get_one, get_one_string, get_attr, get_obj_attr, get_num, to_fen, get_pic_url, get_item_id, get_discount, UNKNOWN_NUM, UNLIMITED_NUM
 import time
 import utils
+import socket
 
 debug = False
 print_url = False
@@ -35,6 +36,7 @@ class QQYxthhSpider(BaseSpider):
         self.driver = webdriver.Firefox()
         self.driver.set_page_load_timeout(20)
         self.driver.set_script_timeout(20)
+        socket.setdefaulttimeout(60)
 
     def get_element_by_id(self,container,id):
         try:
@@ -79,6 +81,8 @@ class QQYxthhSpider(BaseSpider):
                 ['classname', 'div[@class="inner"]/div[@class="action"]/a', 'class', 'string', None],
             ]
             attr_dict = get_obj_attr(xpath_list, li_obj)
+            if not attr_dict:
+                continue
             prod = QqYxthhItem()
             prod['link'] = attr_dict['url']
             prod['id'] = hashlib.md5(prod['link']).hexdigest().upper()
@@ -103,6 +107,12 @@ class QQYxthhSpider(BaseSpider):
             #prod['actual_time_end'] = start_time
             prod['limit'] = utils.UNLIMITED_NUM
             prod['source'] = self.display_name
+            origin_category_name = u'数码/家电'
+            category_name = u'数码/家电'
+            prod['origin_category_name'] = origin_category_name
+            prod['category_name'] = category_name
             ret_items.append(prod)
+            log.msg('origin_category_name ' + origin_category_name + ' category_name ' + category_name + ' title ' + attr_dict['title'] + ' url ' + attr_dict['url'], level = log.DEBUG)
+
         return ret_items
 

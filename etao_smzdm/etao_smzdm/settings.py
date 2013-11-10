@@ -8,17 +8,17 @@
 
 BOT_NAME = 'template'
 
-SPIDER_MODULES = ['template.spiders']
-NEWSPIDER_MODULE = 'template.spiders'
+SPIDER_MODULES = ['etao_smzdm.spiders']
+NEWSPIDER_MODULE = 'etao_smzdm.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'template (+http://www.yourdomain.com)'
-ITEM_PIPELINES=['template.pipelines.TemplatePipeline']
+ITEM_PIPELINES=['etao_smzdm.pipelines.EtaoSmzdmPipeline']
 #mongodb set
 MONGODB_SERVER = 'localhost'
 MONGODB_PORT = 27017
-MONGODB_DB = 'seckills'
-MONGODB_COLLECTION = 'seckill'
+MONGODB_DB = 'scrapy'
+MONGODB_COLLECTION = 'etao_smzdm_temp'
 MONGODB_UNIQ_KEY = 'id'
 MONGODB_ITEM_ID_FIELD = '_id'
 MONGODB_SAFE = True

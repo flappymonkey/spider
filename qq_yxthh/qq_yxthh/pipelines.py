@@ -47,5 +47,5 @@ class QqYxthhPipeline(object):
             utils.set_origin_value_list(item, cursor, ['display_time_end'])
             utils.check_status(item, cursor)
             self.collection.update({self.uniq_key: item[self.uniq_key] }, {'$set':dict(item) },upsert=True, safe=self.safe)
-        spider.driver.quit()
+        utils.driver_quit(spider.driver)
         spider.log('driver.quit()', level = log.DEBUG)

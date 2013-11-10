@@ -44,5 +44,5 @@ class TaobaoTejiaPipeline(object):
         for (id,item) in self.result_dict.items():
             cursor = self.collection.find_one({self.uniq_key : item[self.uniq_key]})
             utils.check_status(item, cursor)
-            if not utils.set_origin_value_if_db_smaller(item, cursor, 'display_time_end'):
+            if not utils.set_origin_value_if_db_smaller(item, cursor, 'display_time_end') or utils.is_item_changed(item, cursor):
                 self.collection.update({self.uniq_key: item[self.uniq_key] }, {'$set':dict(item) },upsert=True, safe=self.safe)

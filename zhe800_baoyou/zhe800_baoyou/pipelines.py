@@ -45,7 +45,7 @@ class Zhe800BaoyouPipeline(object):
             cursor = self.collection.find_one({self.uniq_key : item[self.uniq_key]})
             #utils.set_origin_value_list(item, cursor, ['display_time_begin'])
             utils.check_status(item, cursor)
-            if not cursor:
+            if not cursor or utils.is_item_changed(item, cursor):
                 self.collection.update({self.uniq_key: item[self.uniq_key] }, {'$set':dict(item) },upsert=True, safe=self.safe)
-        spider.driver.quit()
+        utils.driver_quit(spider.driver)
         spider.log('driver.quit()', level = log.DEBUG)

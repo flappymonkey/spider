@@ -1,0 +1,15 @@
+1.线上2C机器，用git 更新到2014，修改Smzdm/Smzdm/settings.py中的配置，把
+CUT_TIME = 3600*24*7
+MAX_ITEM_NUM = 200
+第一轮抓取完毕后，修改配置
+CUT_TIME = 3600*24
+MAX_ITEM_NUM = 50
+2.把原来的smzdm表rename成smzdm_backup
+3.在crontab中去掉
+0,15,30,45 * * * * cd /home/ops/ToC_2014/Spider/Smzdm/Smzdm;scrapy crawl SmzdmSpider -a mode=2
+1,15,31 * * * * cd /home/ops/ToC_2014/Spider/etao_smzdm;scrapy crawl etao_smzdm >> ../log/etao_smzdm.out 2>&1
+增加
+15,45 * * * * cd /home/ops/ToC_2014/Spider/tools && bash crawl_smzdm.sh prd etao_smzdm 10 detectmove >> ../log/detect.out 2>&1
+手动跑smzdm的抓取，跑完后修改配置
+然后在crontab中加上
+0,15,30,45 * * * cd /home/ops/ToC_2014/Spider/tools && bash crawl_smzdm.sh prd smzdm 10 detectmove >> ../log/detect.out 2>&1

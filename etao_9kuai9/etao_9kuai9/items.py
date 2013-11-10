@@ -1,7 +1,8 @@
 #coding=utf-8
+
 from scrapy.item import Item, Field
 
-class QqYxthhItem(Item):
+class Etao9Kuai9Item(Item):
     # define the fields for your item here like:
     id = Field() #id
     source = Field() #来源
